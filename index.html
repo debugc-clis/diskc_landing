@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>diskc — Find What Is Filling Your Disk</title>
-  <meta name="description" content="diskc is an SRE-first Linux and macOS CLI for diagnosing disk pressure, with a fast light mode for low-impact capacity, inode, and top-file checks.">
+  <meta name="description" content="diskc is an SRE-first Linux and macOS CLI for disk pressure, fast growth, writers, mounted filesystems, databases, Docker storage, and macOS system storage.">
   <meta name="keywords" content="diskc, linux disk usage, disk full, SRE tools, DevOps CLI, df alternative, du alternative, lsof deleted files, disk pressure, log growth, linux troubleshooting">
   <meta name="author" content="diskc contributors">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
@@ -456,6 +456,65 @@
     .quick-check code { display:block; overflow:auto; color:var(--mint); font-size:11.5px; white-space:nowrap; }
     .quick-check p { margin:8px 0 0; color:#97a8b0; font-size:12px; line-height:1.45; }
 
+    /* Examples */
+    .example-index {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: -4px 0 20px;
+    }
+    .example-index a {
+      border: 1px solid rgba(242,140,40,.22);
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: rgba(242,140,40,.045);
+      color: #c8d2d6;
+      font: 750 11px/1 var(--mono);
+      transition: .16s ease;
+    }
+    .example-index a:hover,
+    .example-index a:focus-visible {
+      outline: 0;
+      color: var(--green);
+      border-color: rgba(242,140,40,.52);
+      background: rgba(242,140,40,.09);
+    }
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .example-card { min-width: 0; overflow: hidden; scroll-margin-top: 88px; }
+    .example-card.wide { grid-column: 1 / -1; }
+    .example-copy { padding: 19px 20px 0; }
+    .example-copy h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .example-copy p { margin: 7px 0 0; color: #9aabb2; font-size: 12.5px; line-height: 1.5; }
+    .example-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .example-tags span {
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: rgba(112,184,192,.07);
+      color: #9ec9ce;
+      font: 750 9.5px/1 var(--mono);
+      letter-spacing: .035em;
+      text-transform: uppercase;
+    }
+    .example-card .terminal {
+      margin-top: 15px;
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,.07);
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .example-card .terminal-body { max-height: 390px; }
+    .example-note {
+      margin-top: 16px;
+      border-left: 2px solid var(--green);
+      padding: 1px 0 1px 12px;
+      color: #91a3ab;
+      font-size: 12.5px;
+    }
+
     /* Install */
     .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .install { padding: 23px; }
@@ -530,7 +589,7 @@
 
     @media (max-width: 980px) {
       .nav-links { display:none; }
-      .hero-grid, .usage-grid { grid-template-columns:1fr; }
+      .hero-grid, .usage-grid, .example-grid { grid-template-columns:1fr; }
       .hero { padding-top:50px; }
       .step-grid { grid-template-columns: repeat(3,1fr); }
       .incident-console { grid-template-columns:1fr; }
@@ -579,7 +638,8 @@
         <a href="#why">Why</a>
         <a href="#how">How it works</a>
         <a href="#usage">Usage</a>
-        <a href="#quick-checks">Quick checks</a>
+        <a href="#examples">Examples</a>
+        <a href="#flags">Flags</a>
         <a href="#install">Install</a>
         <a href="#safety">Safety</a>
       </div>
@@ -626,10 +686,11 @@
             <div class="terminal-body">
 <pre><span class="prompt">$</span> <span class="cmd">diskc</span>
 
-Disk pressure: <span class="warn">WARNING</span>  92.4% used (38.0 GB free)
+Disk pressure: <span class="warn">WARNING</span>  92.4% unavailable (38.0 GB available, 42.0 GB free)
+Filesystem usage: 91.6% used  |  4.0 GB reserved
 Inodes: 41.0% used  |  /
-Observed growth: <span class="warn">+2.4 GB/hour</span>
-Estimated full at observed growth: <span class="hot">~35 minutes</span>
+Filesystem net growth: <span class="warn">+65.5 GB/hour</span>
+Estimated full at net growth: <span class="hot">~35 minutes</span>
 
 Largest files
   <span class="path">74.8 GB  /var/log/payment/app.log</span>  (log)  <span class="hot">↑ 18.2 MB/s</span>  [1 writer(s)]
@@ -705,12 +766,12 @@ disk full in ~35 min</pre></div>
           <article class="card step">
             <div class="num">1</div>
             <h3>Find pressure</h3>
-            <p>Check filesystem capacity and inode pressure instead of only bytes used.</p>
+            <p>Distinguish consumed, reserved, and user-available capacity while checking inode pressure.</p>
           </article>
           <article class="card step">
             <div class="num">2</div>
             <h3>Rank consumers</h3>
-            <p>Drill into unusually large directories and likely data files without dumping the whole filesystem.</p>
+            <p>Rank files and directories by allocated blocks while retaining apparent size for sparse-file context.</p>
           </article>
           <article class="card step">
             <div class="num">3</div>
@@ -744,8 +805,8 @@ disk full in ~35 min</pre></div>
             <div class="incident-command"><span class="prompt">$</span> diskc</div>
             <div class="incident-output">
               <div class="incident-output-label">Hover a signal to inspect it</div>
-              <button class="incident-line is-active" type="button" aria-pressed="true" data-eyebrow="Pressure summary" data-title="Start with capacity, inodes, and time-to-full." data-copy="diskc puts the filesystem's immediate risk in one place: byte pressure, inode pressure, observed growth, and a projected deadline." data-evidence="<strong>What it replaces:</strong> running df -h, df -i, and separate calculations before you know how urgent the incident is.">
-                <span class="line-path">Disk pressure: <span class="warn">WARNING</span>  92.4% used (38.0 GB free)<br>Inodes: 41.0% used  |  /<br>Observed growth: <span class="warn">+2.4 GB/hour</span><br>Estimated full at observed growth: <span class="hot">~35 minutes</span></span>
+              <button class="incident-line is-active" type="button" aria-pressed="true" data-eyebrow="Pressure summary" data-title="Start with capacity, inodes, and time-to-full." data-copy="diskc puts the filesystem's immediate risk in one place: user-available capacity pressure, actual filesystem usage, reserved blocks, inode pressure, observed growth, and a projected deadline." data-evidence="<strong>What it replaces:</strong> running df -h, df -i, and separate calculations before you know how urgent the incident is.">
+                <span class="line-path">Disk pressure: <span class="warn">WARNING</span>  92.4% unavailable (38.0 GB available, 42.0 GB free)<br>Filesystem usage: 91.6% used  |  4.0 GB reserved<br>Inodes: 41.0% used  |  /<br>Filesystem net growth: <span class="warn">+65.5 GB/hour</span><br>Estimated full at net growth: <span class="hot">~35 minutes</span></span>
               </button>
               <div class="incident-output-label">Largest files</div>
               <button class="incident-line" type="button" aria-pressed="false" data-eyebrow="Rapid log growth" data-title="The urgent file is not always the biggest." data-copy="diskc ranks the observed growth beside file size, then resolves the writer process and projected time to full for the log that is actually driving the incident." data-evidence="<strong>What it replaces:</strong> repeating du, find, lsof, and ps while the file keeps growing.">
@@ -773,7 +834,7 @@ disk full in ~35 min</pre></div>
             <div>
               <p class="insight-eyebrow" id="insightEyebrow">Pressure summary</p>
               <h3 id="insightTitle">Start with capacity, inodes, and time-to-full.</h3>
-              <p id="insightCopy">diskc puts the filesystem's immediate risk in one place: byte pressure, inode pressure, observed growth, and a projected deadline.</p>
+              <p id="insightCopy">diskc puts the filesystem's immediate risk in one place: user-available capacity pressure, actual usage, reserved blocks, inode pressure, observed growth, and a projected deadline.</p>
             </div>
             <div>
               <div class="insight-divider"></div>
@@ -787,88 +848,325 @@ disk full in ~35 min</pre></div>
 
     <section id="usage">
       <div class="wrap">
-        <h2 class="section-title">Simple commands. <span>No command maze.</span></h2>
-        <p class="section-intro">Start with a low-impact snapshot, run the full investigation, target one or more paths, or inspect every physical mount. Full mode samples growth for three seconds by default.</p>
+        <h2 class="section-title">Complete usage. <span>In help order.</span></h2>
+        <p class="section-intro">The command list below follows <code>diskc --help</code> exactly. Start with the first form for normal filesystem incidents, then use a focused subcommand only when you need it.</p>
         <div class="usage-grid">
           <div class="card commands">
-            <div class="command-row"><code>diskc</code><span>Investigate <code>/</code>: pressure, inodes, large files/directories, growth, and writable processes.</span></div>
-            <div class="command-row"><code>diskc light</code><span>Get a shallow top-10 snapshot with no growth wait or process file-descriptor scan.</span></div>
-            <div class="command-row"><code>diskc /var</code><span>Inspect one filesystem, directory, or a single file.</span></div>
-            <div class="command-row"><code>diskc / /data /backup</code><span>Inspect several paths independently; results are never mixed across filesystems.</span></div>
-            <div class="command-row"><code>diskc --all</code><span>Discover and inspect all mounted physical filesystems, excluding virtual mounts.</span></div>
+            <div class="command-row"><code>diskc [path ...] [flags]</code><span>Inspect <code>/</code> by default, or one or more explicit filesystems, directories, and files.</span></div>
+            <div class="command-row"><code>diskc light [path ...] [flags]</code><span>Run a shallow top-10 snapshot without the default growth wait or process descriptor scan.</span></div>
+            <div class="command-row"><code>diskc list [--json]</code><span>List mounted filesystems in a risk-first table without scanning their contents.</span></div>
+            <div class="command-row"><code>diskc db [flags]</code><span>Inspect local database processes, configuration, paths, and disk use.</span></div>
+            <div class="command-row"><code>diskc docker [flags]</code><span>Inspect Docker and containerd host storage without requiring daemon access.</span></div>
+            <div class="command-row"><code>diskc doc [path] [--json]</code><span>Check diskc defaults, filesystem pressure, mount access, and process visibility.</span></div>
+            <div class="command-row"><code>diskc mac system [flags]</code><span>Inspect macOS system storage with conservative cleanup guidance.</span></div>
+            <div class="command-row"><code>diskc version</code><span>Print release, commit, build, Go, and platform information.</span></div>
           </div>
 
           <div class="terminal">
             <div class="terminal-head">
               <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-              <span class="terminal-title">diskc /var/log</span>
+              <span class="terminal-title">diskc --help</span>
             </div>
             <div class="terminal-body">
-<pre><span class="prompt">$</span> <span class="cmd">diskc /var/log</span>
+<pre><span class="prompt">$</span> <span class="cmd">diskc --help</span>
 
-Disk pressure: <span class="warn">WARNING</span>  92.4% used (38.0 GB free)
-Inodes: 41.0% used  |  /var/log
-Observed growth: <span class="warn">+2.4 GB/hour</span>
-Estimated full at observed growth: <span class="hot">~35 minutes</span>
+Usage: diskc [path ...] [flags]
+       diskc light [path ...] [flags]
+       diskc list [--json]
+       diskc db [flags]
+       diskc docker [flags]
+       diskc doc [path] [--json]
+       diskc mac system [flags]
+       diskc version
 
-Largest files
-   74.8 GB  /var/log/payment/app.log  (log)  <span class="hot">↑ 18.2 MB/s</span>  [1 writer(s)]
-   31.6 GB  /var/log/nginx/access.log  (log)  <span class="warn">↑ 4.1 MB/s</span>
-   18.1 GB  /var/log/app/archive  (file)
-
-Active writers
-/var/log/payment/app.log
-└─ PID 21819  payment-api
-   ├─ exe      /opt/payment/bin/payment-api
-   └─ service  payment.service
-
-Potential issues
-<span class="hot">/var/log/payment/app.log</span>
-├─ rapid growth: 65.5 GB/hour
-└─ filesystem full in ~35 min</pre>
+Find what is filling a filesystem. Use 'diskc list'
+for an instant mounted-filesystem summary.</pre>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="quick-checks">
+    <section id="examples">
+      <div class="wrap">
+        <h2 class="section-title">Every command. <span>One useful example.</span></h2>
+        <p class="section-intro">Examples follow the exact command order printed by <code>diskc --help</code>, with one representative output per command instead of repeating small variations. Values and discovered paths vary by host, permissions, filesystem, and operating system.</p>
+
+        <nav class="example-index" aria-label="Example commands">
+          <a href="#example-default">Filesystem</a>
+          <a href="#example-light">Light</a>
+          <a href="#example-list">List</a>
+          <a href="#example-db">Database</a>
+          <a href="#example-docker">Docker</a>
+          <a href="#example-doc">Doctor</a>
+          <a href="#example-mac">macOS</a>
+          <a href="#example-version">Version</a>
+        </nav>
+
+        <div class="example-grid">
+          <article class="card example-card wide" id="example-default">
+            <div class="example-copy">
+              <h3><code>diskc [path ...] [flags]</code></h3>
+              <p>Run without arguments to inspect <code>/</code> with depth four, top 20, a three-second growth sample, and Linux process attribution. Pass one or more paths when the incident is on another filesystem; all paths share one sampling window.</p>
+              <div class="example-tags"><span>Capacity</span><span>Growth</span><span>Writers</span><span>Deleted-open</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc</span>
+
+Disk pressure: <span class="warn">WARNING</span>  92.4% unavailable (38.0 GB available, 42.0 GB free)
+Filesystem usage: 91.6% used  |  4.0 GB reserved
+Inodes: 41.0% used  |  /
+Filesystem net growth: <span class="warn">+65.5 GB/hour</span>
+Estimated full at net growth: <span class="hot">~35 minutes</span>
+
+Largest files
+   74.8 GB  <span class="path">/var/log/payment/app.log</span>  (log)  <span class="hot">↑ 18.2 MB/s</span>  [1 writer(s)]
+   42.1 GB  <span class="path">/tmp/upload-883120.bin</span>  (temporary/cache)
+
+Largest scanned directories
+  128.4 GB  <span class="path">/var/log</span>
+   67.2 GB  <span class="path">/tmp</span>
+
+Fastest growth
+   18.2 MB/s  <span class="path">/var/log/payment/app.log</span>  (log)
+
+Active writers
+<span class="path">/var/log/payment/app.log</span>
+└─ PID 21819  payment-api
+   ├─ exe      /opt/payment/bin/payment-api
+   └─ service  payment.service
+
+Deleted but still open (38.2 GB retained)
+   38.2 GB  <span class="path">/var/log/payment/app-old.log</span>  ← payment-api (PID 21819)</pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card" id="example-light">
+            <div class="example-copy">
+              <h3><code>diskc light [path ...] [flags]</code></h3>
+              <p>Use a shallow scan on a busy host. It skips the growth wait, process file-descriptor walk, and deleted-open-file discovery.</p>
+              <div class="example-tags"><span>Low impact</span><span>No wait</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc light /var</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc light /var</span>
+
+Light mode: process checks skipped; shallow scan and no growth wait by default.
+
+Disk pressure: <span class="good">OK</span>  68.4% unavailable (151.2 GB available, 151.2 GB free)
+Filesystem usage: 68.4% used
+Inodes: 22.7% used  |  /var
+
+Largest files
+    8.4 GB  <span class="path">/var/log/app.log</span>  (log)
+    2.1 GB  <span class="path">/var/cache/app/cache.bin</span>  (temporary/cache)</pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card" id="example-list">
+            <div class="example-copy">
+              <h3><code>diskc list [--json]</code></h3>
+              <p>Get a risk-first host table immediately, without traversing directory contents or probing remote and unknown filesystems.</p>
+              <div class="example-tags"><span>Multiple disks</span><span>No scan</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc list</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc list</span>
+
+STATUS    MOUNT    SOURCE          TYPE/KIND     SIZE      USED      AVAIL     PRESS%  INODE%  MODE  CAPACITY
+CRITICAL  /var     /dev/nvme0n1p3  ext4/local   180.0 GB  168.0 GB  7.8 GB    95.7%   42.1%   rw    dedicated
+WARNING   /data    /dev/nvme1n1    xfs/local    1.8 TB    1.6 TB    136.0 GB  92.6%   18.4%   rw    dedicated
+REMOTE    /backup  host:/backup    nfs4/remote  -         -         -          -       -       ro    -</pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card wide" id="example-db">
+            <div class="example-copy">
+              <h3><code>diskc db [flags]</code></h3>
+              <p>Discover PostgreSQL, MySQL/MariaDB, Redis, ClickHouse, and MongoDB processes, configuration, data paths, log paths, and relevant disk settings without connecting to the database.</p>
+              <div class="example-tags"><span>Read only</span><span>No DB login</span><span>Five engines</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc db</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc db --top 3 --sample 5s</span>
+
+Database: postgresql
+Processes
+  PID 1927  postgres  /usr/lib/postgresql/16/bin/postgres
+Configuration
+  /etc/postgresql/16/main/postgresql.conf
+Relevant settings
+  archive_mode                 on
+  data_directory              /var/lib/postgresql/16/main
+Data paths
+  /var/lib/postgresql
+
+Filesystem: /var/lib/postgresql
+  Pressure: 91.8%  Used: 90.7%  Inodes: 31.2%  Available: 18.4 GB
+  Filesystem net trend: +1.8 GB/hour
+     28.0 GB  <span class="path">/var/lib/postgresql/16/main/base/16384/2619</span>
+  Fastest growth
+    512.0 KB/s  <span class="path">/var/lib/postgresql/16/main/pg_wal/000000010000002A000000EF</span></pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card wide" id="example-docker">
+            <div class="example-copy">
+              <h3><code>diskc docker [flags]</code></h3>
+              <p>Inspect configured and conventional rootful or rootless data roots, containerd storage, Docker logs, BuildKit cache, sockets, and runtime processes—without requiring Docker API access.</p>
+              <div class="example-tags"><span>Docker</span><span>containerd</span><span>Rootless aware</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc docker</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc docker --top 3 --sample 5s</span>
+
+Docker storage
+Runtime: docker
+Config: /etc/docker/daemon.json
+Data root: /var/lib/docker
+Socket: /var/run/docker.sock
+Processes
+  PID 944  dockerd  /usr/bin/dockerd
+
+docker data root: /var/lib/docker
+  Pressure: 92.6%  Used: 91.4%  Inodes: 18.4%  Available: 36.0 GB
+  Filesystem net trend: +4.6 GB/hour
+  Largest files
+       18.2 GB  <span class="path">/var/lib/docker/containers/7e.../7e...-json.log</span>  <span class="hot">↑ 1.3 MB/s</span>
+  Fastest growth
+        1.3 MB/s  <span class="path">/var/lib/docker/containers/7e.../7e...-json.log</span>
+  Largest directories
+       81.0 GB  <span class="path">/var/lib/docker/overlay2</span></pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card wide" id="example-doc">
+            <div class="example-copy">
+              <h3><code>diskc doc [path] [--json]</code></h3>
+              <p>Run a quick doctor check before a deeper scan. It displays diskc's built-in defaults and reports mount, capacity, inode, and process-inspection findings without walking files.</p>
+              <div class="example-tags"><span>Configuration</span><span>Health checks</span><span>No scan</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc doc /data</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc doc /data</span>
+diskc doctor
+Build: dev (none)  Go: go1.22.2  Platform: linux/amd64
+Built: unknown
+Target: /data
+
+Configuration (built-in defaults; no configuration file)
+  full: top=20 depth=4 sample=3s
+  light: top=10 depth=2 sample=0s
+  db: top=20 depth=4 sample=3s
+  docker: top=20 depth=4 sample=3s
+  mac system: top=20 depth=5 sample=0s
+  all mounts: false  watch: false  json: false
+  watch interval: 3s
+  Linux process checks: true  deleted-open checks: true
+
+Mount: /data  source=/dev/nvme1n1  type=xfs  kind=local
+
+Checks
+  [OK] mount inventory: 6 mounted filesystems discovered
+  <span class="warn">[WARNING]</span> capacity: 92.6% unavailable; 136.0 GB available
+       next: investigate large and growing files with diskc on this path
+  [OK] inodes: 18.4% used
+  [OK] process inspection: /proc is readable; other users' processes may still be hidden by permissions
+
+1 issue(s) found.</pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card wide" id="example-mac">
+            <div class="example-copy">
+              <h3><code>diskc mac system [flags]</code></h3>
+              <p>Scan high-value system roots and attach conservative cleanup guidance. The command reports risk but never deletes a file automatically.</p>
+              <div class="example-tags"><span>macOS only</span><span>Cleanup guidance</span><span>No deletion</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc mac system</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc mac system --top 3</span>
+
+macOS system disk report
+Platform: darwin
+
+/Users (user data and application caches)
+  Largest files
+       14.2 GB  <span class="path">/Users/alex/Library/Caches/com.example/cache.db</span>
+      recommendation: Usually removable after closing the owning app; re-created when needed
+      risk: review before cleaning
+  Largest directories
+       86.4 GB  <span class="path">/Users/alex/Library</span>
+
+No files are deleted automatically.</pre></div>
+            </div>
+          </article>
+
+          <article class="card example-card wide" id="example-version">
+            <div class="example-copy">
+              <h3><code>diskc version</code></h3>
+              <p>Include version, commit, build time, Go version, and platform when collecting reproducible incident evidence.</p>
+              <div class="example-tags"><span>Support</span><span>Reproducibility</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">diskc version</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc version</span>
+diskc v0.2.0
+commit: a1b2c3d
+built: 2026-09-06T18:40:00Z
+go: go1.22.2
+platform: linux/amd64</pre></div>
+            </div>
+          </article>
+        </div>
+
+        <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
+      </div>
+    </section>
+
+    <section id="flags">
       <div class="wrap">
         <div class="card quick-checks">
           <div class="quick-checks-head">
-            <h2 class="section-title">SRE quick checks for <span>live incidents.</span></h2>
-            <p>All commands are read-only. Use <code>Ctrl-C</code> to stop watch mode.</p>
+            <h2 class="section-title">All shared flags. <span>In help order.</span></h2>
+            <p>Both <code>-flag</code> and <code>--flag</code> forms are accepted.</p>
           </div>
           <div class="quick-grid">
             <article class="quick-check">
-              <strong>Fast low-impact triage</strong>
-              <code>diskc light /var</code>
-              <p>Use a shallow top-10 scan with no growth wait or Linux process file-descriptor walk.</p>
+              <strong><code>-all</code></strong>
+              <code>main · light</code>
+              <p>Inspect every discovered local filesystem device. Remote, pseudo, and memory mounts are excluded and duplicate devices are scanned once.</p>
             </article>
             <article class="quick-check">
-              <strong>Find the file growing now</strong>
-              <code>diskc /var --top 50 --depth 6 --sample 5s</code>
-              <p>Use a deeper scan and longer sample to rank high-growth candidates with writer context.</p>
+              <strong><code>-depth N</code></strong>
+              <code>main · light · db · docker · mac system</code>
+              <p>Set maximum directory depth. Defaults: main, database, and Docker <code>4</code>; light <code>2</code>; macOS system <code>5</code>.</p>
             </article>
             <article class="quick-check">
-              <strong>Resolve df versus du</strong>
-              <code>diskc --sample 0</code>
-              <p>Standard mode checks deleted-but-open files automatically on Linux, even without a growth sample.</p>
+              <strong><code>-interval DURATION</code></strong>
+              <code>main · light</code>
+              <p>Wait after each completed watch scan before refreshing again. The default interval is <code>3s</code>.</p>
             </article>
             <article class="quick-check">
-              <strong>Sweep every physical mount</strong>
-              <code>diskc --all --top 20 --sample 5s</code>
-              <p>Check attached data volumes without walking virtual filesystems such as <code>/proc</code> and tmpfs.</p>
+              <strong><code>-json</code></strong>
+              <code>main · light · list · db · docker · doc · mac system</code>
+              <p>Emit machine-readable JSON. Watch mode emits one compact JSON value per line as NDJSON.</p>
             </article>
             <article class="quick-check">
-              <strong>Watch an active incident</strong>
-              <code>diskc --watch --interval 5s /data</code>
-              <p>Refresh the report continuously to see the same evidence change as pressure builds.</p>
+              <strong><code>-sample DURATION</code></strong>
+              <code>main · light · db · docker · mac system</code>
+              <p>Measure file and filesystem growth over the selected duration. Use <code>0</code> to disable; main defaults to <code>3s</code>.</p>
             </article>
             <article class="quick-check">
-              <strong>Export evidence for automation</strong>
-              <code>diskc /data --top 50 --sample 3s --json</code>
-              <p>Emit machine-readable output for incident tooling; multi-path scans produce a JSON array.</p>
+              <strong><code>-top N</code></strong>
+              <code>main · light · db · docker · mac system</code>
+              <p>Limit the largest and fastest-growing files reported. Main and focused scans default to <code>20</code>; light defaults to <code>10</code>.</p>
+            </article>
+            <article class="quick-check">
+              <strong><code>-watch</code></strong>
+              <code>main · light</code>
+              <p>Refresh until <code>Ctrl-C</code>. Terminals redraw in place; redirected text receives timestamped separators without escape sequences.</p>
             </article>
           </div>
         </div>
