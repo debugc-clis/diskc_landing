@@ -1122,6 +1122,7 @@ platform: linux/amd64</pre></div>
         </div>
 
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
+        <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
       </div>
     </section>
 
