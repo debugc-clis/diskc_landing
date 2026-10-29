@@ -1123,6 +1123,7 @@ platform: linux/amd64</pre></div>
 
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
         <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
+        <p class="example-note">Growth sampling compares allocated blocks only for the same regular file, identified by device and inode at the scan and both sample observations. Rotated or replaced files show <code>growth unmeasured: file replaced; resample</code>; unavailable or non-regular paths show an unmeasured-growth label and retain their last observed regular-file size. Neither enters the fastest-growth ranking. Sampled JSON files include <code>growth_status</code>: <code>measured</code>, <code>replaced</code>, or <code>unavailable</code>; the field is omitted when sampling is disabled. A zero rate for an unmeasured file is a placeholder. Run another sample to measure the current file. Rates are net changes between observations, so same-inode truncation and regrowth may be missed.</p>
       </div>
     </section>
 
