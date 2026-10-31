@@ -781,7 +781,7 @@ disk full in ~35 min</pre></div>
           <article class="card step">
             <div class="num">4</div>
             <h3>Resolve writers</h3>
-            <p>Map active files to PIDs, executables, services, and containers when that context is available.</p>
+            <p>Match writable Linux descriptors to the last observed file identity, with PID, executable, service, and container context when available.</p>
           </article>
           <article class="card step">
             <div class="num">5</div>
@@ -1124,6 +1124,7 @@ platform: linux/amd64</pre></div>
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
         <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
         <p class="example-note">Growth sampling compares allocated blocks only for the same regular file, identified by device and inode at the scan and both sample observations. Rotated or replaced files show <code>growth unmeasured: file replaced; resample</code>; unavailable or non-regular paths show an unmeasured-growth label and retain their last observed regular-file size. Neither enters the fastest-growth ranking. Sampled JSON files include <code>growth_status</code>: <code>measured</code>, <code>replaced</code>, or <code>unavailable</code>; the field is omitted when sampling is disabled. A zero rate for an unmeasured file is a placeholder. Run another sample to measure the current file. Rates are net changes between observations, so same-inode truncation and regrowth may be missed.</p>
+        <p class="example-note">Linux writer attribution matches writable descriptors to each file's last observed device and inode, including with <code>--sample 0</code>. If a log is renamed or its pathname is replaced after observation, the replacement's processes are not attached to the earlier evidence. Paths are historical labels and may have moved. Overlapping scans keep their observations separate, and each matching PID appears once per file. A writable descriptor is an investigation lead, not proof that a process caused the sampled growth. Verify the PID, descriptor, and service before taking action. Missing JSON <code>writers</code> means no match was visible at inspection; permissions and process exits can hide matches.</p>
       </div>
     </section>
 
