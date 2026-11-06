@@ -692,6 +692,12 @@ Inodes: 41.0% used  |  /
 Filesystem net growth: <span class="warn">+65.5 GB/hour</span>
 Estimated full at net growth: <span class="hot">~35 minutes</span>
 
+Scan scope: / | max directory depth 4 | 12438 unique regular file(s) observed
+Skipped directory boundaries: depth=87, other filesystem=2, pseudo filesystem=4 | symlinks=16 | inspection errors=0
+Directory totals cover observed files only; excluded subtrees and inaccessible files are not included.
+Next: increase --depth or inspect a specific subtree as a scan root.
+Next: inspect linked or mounted data paths explicitly as separate scan roots.
+
 Largest files
   <span class="path">74.8 GB  /var/log/payment/app.log</span>  (log)  <span class="hot">↑ 18.2 MB/s</span>  [1 writer(s)]
   <span class="path">42.1 GB  /tmp/upload-883120.bin</span>   (temporary/cache)  <span class="hot">↑ 11.8 MB/s</span>
@@ -920,6 +926,12 @@ Inodes: 41.0% used  |  /
 Filesystem net growth: <span class="warn">+65.5 GB/hour</span>
 Estimated full at net growth: <span class="hot">~35 minutes</span>
 
+Scan scope: / | max directory depth 4 | 12438 unique regular file(s) observed
+Skipped directory boundaries: depth=87, other filesystem=2, pseudo filesystem=4 | symlinks=16 | inspection errors=0
+Directory totals cover observed files only; excluded subtrees and inaccessible files are not included.
+Next: increase --depth or inspect a specific subtree as a scan root.
+Next: inspect linked or mounted data paths explicitly as separate scan roots.
+
 Largest files
    74.8 GB  <span class="path">/var/log/payment/app.log</span>  (log)  <span class="hot">↑ 18.2 MB/s</span>  [1 writer(s)]
    42.1 GB  <span class="path">/tmp/upload-883120.bin</span>  (temporary/cache)
@@ -957,6 +969,11 @@ Light mode: process checks skipped; shallow scan and no growth wait by default.
 Disk pressure: <span class="good">OK</span>  68.4% unavailable (151.2 GB available, 151.2 GB free)
 Filesystem usage: 68.4% used
 Inodes: 22.7% used  |  /var
+
+Scan scope: /var | max directory depth 2 | 842 unique regular file(s) observed
+Skipped directory boundaries: depth=23, other filesystem=0, pseudo filesystem=0 | symlinks=0 | inspection errors=0
+Directory totals cover observed files only; excluded subtrees and inaccessible files are not included.
+Next: increase --depth or inspect a specific subtree as a scan root.
 
 Largest files
     8.4 GB  <span class="path">/var/log/app.log</span>  (log)
@@ -1122,6 +1139,8 @@ platform: linux/amd64</pre></div>
         </div>
 
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
+        <p class="example-note">Every successful normal, light, database, Docker, and macOS system scan shows its resolved root, actual directory depth, unique regular files observed, skipped directory boundaries, skipped links, and inspection errors before the results. Directory totals cover observed files only. <code>--depth 0</code> includes files directly in the root; <code>--depth 1</code> also includes files in immediate child directories. If depth hides relevant data, increase <code>--depth</code> or inspect a specific subtree explicitly. Inspect linked or mounted data roots explicitly when needed, and review warnings and access after inspection errors.</p>
+        <p class="example-note">JSON includes <code>scan_scope</code> on each successful scan: beside <code>filesystem</code> in normal/light reports, on database <code>filesystems</code> entries, Docker <code>paths</code> entries, and macOS <code>roots</code> entries. Fields are <code>root</code>, <code>max_depth</code>, <code>regular_files</code>, <code>skipped_depth_directories</code>, <code>skipped_filesystem_directories</code>, <code>skipped_pseudo_directories</code>, <code>skipped_symlinks</code>, and <code>inspection_errors</code>, including zero counters. Counts describe the initial traversal before candidate selection and sampling; observed files can outnumber reported files. Skip counts cover encountered boundaries, not hidden descendants, using the first applicable directory exclusion: pseudo-filesystem path rules, depth, then device. Error counts remain accurate when detailed warnings are capped. Zero counts do not guarantee complete visibility; directory totals exclude metadata, other filesystems, deleted-open files, and unobserved contents.</p>
         <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
         <p class="example-note">Growth sampling compares allocated blocks only for the same regular file, identified by device and inode at the scan and both sample observations. Rotated or replaced files show <code>growth unmeasured: file replaced; resample</code>; unavailable or non-regular paths show an unmeasured-growth label and retain their last observed regular-file size. Neither enters the fastest-growth ranking. Sampled JSON files include <code>growth_status</code>: <code>measured</code>, <code>replaced</code>, or <code>unavailable</code>; the field is omitted when sampling is disabled. A zero rate for an unmeasured file is a placeholder. Run another sample to measure the current file. Rates are net changes between observations, so same-inode truncation and regrowth may be missed.</p>
         <p class="example-note">Linux writer attribution matches writable descriptors to each file's last observed device and inode, including with <code>--sample 0</code>. If a log is renamed or its pathname is replaced after observation, the replacement's processes are not attached to the earlier evidence. Paths are historical labels and may have moved. Overlapping scans keep their observations separate, and each matching PID appears once per file. A writable descriptor is an investigation lead, not proof that a process caused the sampled growth. Verify the PID, descriptor, and service before taking action. Missing JSON <code>writers</code> means no match was visible at inspection; permissions and process exits can hide matches.</p>
