@@ -1054,7 +1054,7 @@ docker data root: /var/lib/docker
   Fastest growth
         1.3 MB/s  <span class="path">/var/lib/docker/containers/7e.../7e...-json.log</span>
   Largest directories
-       81.0 GB  <span class="path">/var/lib/docker/overlay2</span></pre></div>
+       81.0 GB  <span class="path">/var/lib/docker/overlay2</span>  (estimated)</pre></div>
             </div>
           </article>
 
@@ -1114,7 +1114,7 @@ Platform: darwin
       recommendation: Usually removable after closing the owning app; re-created when needed
       risk: review before cleaning
   Largest directories
-       86.4 GB  <span class="path">/Users/alex/Library</span>
+       86.4 GB  <span class="path">/Users/alex/Library</span>  (estimated)
 
 No files are deleted automatically.</pre></div>
             </div>
@@ -1140,6 +1140,7 @@ platform: linux/amd64</pre></div>
 
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
         <p class="example-note">Every successful normal, light, database, Docker, and macOS system scan shows its resolved root, actual directory depth, unique regular files observed, skipped directory boundaries, skipped links, and inspection errors before the results. Directory totals cover observed files only. <code>--depth 0</code> includes files directly in the root; <code>--depth 1</code> also includes files in immediate child directories. If depth hides relevant data, increase <code>--depth</code> or inspect a specific subtree explicitly. Inspect linked or mounted data roots explicitly when needed, and review warnings and access after inspection errors.</p>
+        <p class="example-note">When a scan exceeds the bounded directory tracker, affected directory rows show <code>(estimated)</code> in normal, light, Docker, and macOS system text reports, as illustrated in the abbreviated Docker and macOS examples above. JSON directory objects include <code>estimated: true</code> for those rows; the field is omitted for non-estimated rows. A scan warning also identifies bounded heavy-hitter estimates, though detailed warnings can be capped. Estimated counters can include values carried over from an evicted directory, so use them as investigation leads. Inspect a reported subtree explicitly, for example <code>diskc light /var/lib/docker/overlay2 --depth 4</code>, to narrow the investigation; a large subtree can still exceed the tracker. Unmarked rows still have the scan-scope limits described above.</p>
         <p class="example-note">JSON includes <code>scan_scope</code> on each successful scan: beside <code>filesystem</code> in normal/light reports, on database <code>filesystems</code> entries, Docker <code>paths</code> entries, and macOS <code>roots</code> entries. Fields are <code>root</code>, <code>max_depth</code>, <code>regular_files</code>, <code>skipped_depth_directories</code>, <code>skipped_filesystem_directories</code>, <code>skipped_pseudo_directories</code>, <code>skipped_symlinks</code>, and <code>inspection_errors</code>, including zero counters. Counts describe the initial traversal before candidate selection and sampling; observed files can outnumber reported files. Skip counts cover encountered boundaries, not hidden descendants, using the first applicable directory exclusion: pseudo-filesystem path rules, depth, then device. Error counts remain accurate when detailed warnings are capped. Zero counts do not guarantee complete visibility; directory totals exclude metadata, other filesystems, deleted-open files, and unobserved contents.</p>
         <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
         <p class="example-note">Growth sampling compares allocated blocks only for the same regular file, identified by device and inode at the scan and both sample observations. Rotated or replaced files show <code>growth unmeasured: file replaced; resample</code>; unavailable or non-regular paths show an unmeasured-growth label and retain their last observed regular-file size. Neither enters the fastest-growth ranking. Sampled JSON files include <code>growth_status</code>: <code>measured</code>, <code>replaced</code>, or <code>unavailable</code>; the field is omitted when sampling is disabled. A zero rate for an unmeasured file is a placeholder. Run another sample to measure the current file. Rates are net changes between observations, so same-inode truncation and regrowth may be missed.</p>
