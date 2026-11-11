@@ -1100,6 +1100,8 @@ Checks
             <div class="example-copy">
               <h3><code>diskc mac system [flags]</code></h3>
               <p>Scan high-value system roots and attach conservative cleanup guidance. The command reports risk but never deletes a file automatically.</p>
+              <p>Roots whose metadata, filesystem usage, or scan fails remain visible as <code>Skipped:</code> with a reason, a warning, and a next step to review the error and access. JSON keeps <code>skipped: true</code> and <code>skip_reason</code> on those roots, without <code>scan_scope</code> or file rankings. Optional roots absent at the initial metadata check are quietly omitted; later disappearance is reported as skipped. Other roots continue normally.</p>
+              <p>Traversal errors within an otherwise successful scan preserve observed files, scope error counts, and warnings. When no regular files were observed and inspection errors occurred, text says <code>No regular files observed; inspection errors may hide files.</code> Results describe current-user visibility, not complete macOS storage usage.</p>
               <div class="example-tags"><span>macOS only</span><span>Cleanup guidance</span><span>No deletion</span></div>
             </div>
             <div class="terminal">
