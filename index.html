@@ -865,6 +865,7 @@ disk full in ~35 min</pre></div>
             <div class="command-row"><code>diskc docker [flags]</code><span>Inspect Docker and containerd host storage without requiring daemon access.</span></div>
             <div class="command-row"><code>diskc doc [path] [--json]</code><span>Check diskc defaults, filesystem pressure, mount access, and process visibility.</span></div>
             <div class="command-row"><code>diskc mac system [flags]</code><span>Inspect macOS system storage with conservative cleanup guidance.</span></div>
+            <div class="command-row"><code>diskc mac user [flags]</code><span>Inspect current-user caches, application and developer data, downloads, and Trash.</span></div>
             <div class="command-row"><code>diskc version</code><span>Print release, commit, build, Go, and platform information.</span></div>
           </div>
 
@@ -883,6 +884,7 @@ Usage: diskc [path ...] [flags]
        diskc docker [flags]
        diskc doc [path] [--json]
        diskc mac system [flags]
+       diskc mac user [flags]
        diskc version
 
 Find what is filling a filesystem. Use 'diskc list'
@@ -905,7 +907,8 @@ for an instant mounted-filesystem summary.</pre>
           <a href="#example-db">Database</a>
           <a href="#example-docker">Docker</a>
           <a href="#example-doc">Doctor</a>
-          <a href="#example-mac">macOS</a>
+          <a href="#example-mac">macOS system</a>
+          <a href="#example-mac-user">macOS user</a>
           <a href="#example-version">Version</a>
         </nav>
 
@@ -1080,6 +1083,7 @@ Configuration (built-in defaults; no configuration file)
   db: top=20 depth=4 sample=3s
   docker: top=20 depth=4 sample=3s
   mac system: top=20 depth=5 sample=0s
+  mac user: top=20 depth=5 sample=0s
   all mounts: false  watch: false  json: false
   watch interval: 3s
   Linux process checks: true  deleted-open checks: true
@@ -1124,6 +1128,21 @@ No files are deleted automatically.</pre></div>
             </div>
           </article>
 
+          <article class="card example-card wide" id="example-mac-user">
+            <div class="example-copy">
+              <h3><code>diskc mac user [flags]</code></h3>
+              <p>Find large or growing files in eight current-user locations: <code>Library/Caches</code>, <code>Library/Logs</code>, <code>Library/Application Support</code>, <code>Library/Containers</code>, <code>Library/Group Containers</code>, <code>Library/Developer</code>, <code>Downloads</code>, and <code>.Trash</code>. Each is a separate scan root, with defaults <code>--top 20 --depth 5 --sample 0</code> and one shared optional growth window.</p>
+              <p>Application and sandbox container data keep protective guidance even under nested cache or log paths. Developer data may include archives, projects, simulators, and build products; review it in the owning tool. No files are deleted or Trash emptied. Missing optional roots are quiet; failed and partial inspections retain skipped-root, scope, and warning evidence.</p>
+              <p>JSON adds <code>scope: "user"</code> and <code>home</code> beside <code>platform</code>, <code>roots</code>, and optional <code>warnings</code>. Results cover selected directories visible to the current user, rather than whole-home usage or macOS Storage settings totals. APFS snapshots and purgeable space are not measured. Root symlinks are resolved; linked or shared content may overlap, so do not sum root results as unique home usage.</p>
+              <div class="example-tags"><span>macOS only</span><span>Current user</span><span>Read only</span></div>
+            </div>
+            <div class="terminal">
+              <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="terminal-title">macOS user investigation</span></div>
+              <div class="terminal-body"><pre><span class="prompt">$</span> <span class="cmd">diskc mac user --top 10 --depth 3</span>
+<span class="prompt">$</span> <span class="cmd">diskc mac user --sample 5s --json</span></pre></div>
+            </div>
+          </article>
+
           <article class="card example-card wide" id="example-version">
             <div class="example-copy">
               <h3><code>diskc version</code></h3>
@@ -1144,8 +1163,8 @@ platform: linux/amd64</pre></div>
 
         <p class="example-note">Paths and flags can be interspersed. Use <code>--</code> before a path beginning with a hyphen. The next section lists every shared flag once, in the same order as <code>diskc --help</code>.</p>
         <p class="example-note">Every successful normal, light, database, Docker, and macOS system scan shows its resolved root, actual directory depth, unique regular files observed, skipped directory boundaries, skipped links, and inspection errors before the results. Directory totals cover observed files only. <code>--depth 0</code> includes files directly in the root; <code>--depth 1</code> also includes files in immediate child directories. If depth hides relevant data, increase <code>--depth</code> or inspect a specific subtree explicitly. Inspect linked or mounted data roots explicitly when needed, and review warnings and access after inspection errors.</p>
-        <p class="example-note">File rankings use allocated blocks. Normal, light, database, Docker, and macOS system text reports add <code>[N apparent]</code> to file size rows when the positive logical length differs from allocated bytes; existing directory size rows use the same annotation. In the Docker example, the sparse image has a 1 GB logical length but consumes 4 KB of allocated blocks. Apparent length can also be smaller than allocated space, such as for a small file occupying a full block. The annotation does not identify the cause of the difference. JSON retains both <code>allocated_bytes</code> and <code>apparent_bytes</code>. Use allocated bytes to investigate current disk consumption; directory counters remain subject to scan scope and estimation limits.</p>
-        <p class="example-note">When a scan exceeds the bounded directory tracker, affected directory rows show <code>(estimated)</code> in normal, light, Docker, and macOS system text reports, as illustrated in the abbreviated Docker and macOS examples above. JSON directory objects include <code>estimated: true</code> for those rows; the field is omitted for non-estimated rows. A scan warning also identifies bounded heavy-hitter estimates, though detailed warnings can be capped. Estimated counters can include values carried over from an evicted directory, so use them as investigation leads. Inspect a reported subtree explicitly, for example <code>diskc light /var/lib/docker/overlay2 --depth 4</code>, to narrow the investigation; a large subtree can still exceed the tracker. Unmarked rows still have the scan-scope limits described above.</p>
+        <p class="example-note">File rankings use allocated blocks. Normal, light, database, Docker, and macOS system and user text reports add <code>[N apparent]</code> to file size rows when the positive logical length differs from allocated bytes; existing directory size rows use the same annotation. In the Docker example, the sparse image has a 1 GB logical length but consumes 4 KB of allocated blocks. Apparent length can also be smaller than allocated space, such as for a small file occupying a full block. The annotation does not identify the cause of the difference. JSON retains both <code>allocated_bytes</code> and <code>apparent_bytes</code>. Use allocated bytes to investigate current disk consumption; directory counters remain subject to scan scope and estimation limits.</p>
+        <p class="example-note">When a scan exceeds the bounded directory tracker, affected directory rows show <code>(estimated)</code> in normal, light, Docker, and macOS system and user text reports, as illustrated in the abbreviated Docker and macOS examples above. JSON directory objects include <code>estimated: true</code> for those rows; the field is omitted for non-estimated rows. A scan warning also identifies bounded heavy-hitter estimates, though detailed warnings can be capped. Estimated counters can include values carried over from an evicted directory, so use them as investigation leads. Inspect a reported subtree explicitly, for example <code>diskc light /var/lib/docker/overlay2 --depth 4</code>, to narrow the investigation; a large subtree can still exceed the tracker. Unmarked rows still have the scan-scope limits described above.</p>
         <p class="example-note">JSON includes <code>scan_scope</code> on each successful scan: beside <code>filesystem</code> in normal/light reports, on database <code>filesystems</code> entries, Docker <code>paths</code> entries, and macOS <code>roots</code> entries. Fields are <code>root</code>, <code>max_depth</code>, <code>regular_files</code>, <code>skipped_depth_directories</code>, <code>skipped_filesystem_directories</code>, <code>skipped_pseudo_directories</code>, <code>skipped_symlinks</code>, and <code>inspection_errors</code>, including zero counters. Counts describe the initial traversal before candidate selection and sampling; observed files can outnumber reported files. Skip counts cover encountered boundaries, not hidden descendants, using the first applicable directory exclusion: pseudo-filesystem path rules, depth, then device. Error counts remain accurate when detailed warnings are capped. Zero counts do not guarantee complete visibility; directory totals exclude metadata, other filesystems, deleted-open files, and unobserved contents.</p>
         <p class="example-note">Symbolic links in scan roots are resolved before scanning: <code>diskc light /var</code> on macOS scans <code>/private/var</code>. File and directory paths show the resolved target; the filesystem summary keeps the requested path. Links inside the scanned tree are skipped; pass linked data directories as separate roots. Broken or looping root links produce an inspection error.</p>
         <p class="example-note">Growth sampling compares allocated blocks only for the same regular file, identified by device and inode at the scan and both sample observations. Rotated or replaced files show <code>growth unmeasured: file replaced; resample</code>; unavailable or non-regular paths show an unmeasured-growth label and retain their last observed regular-file size. Neither enters the fastest-growth ranking. Sampled JSON files include <code>growth_status</code>: <code>measured</code>, <code>replaced</code>, or <code>unavailable</code>; the field is omitted when sampling is disabled. A zero rate for an unmeasured file is a placeholder. Run another sample to measure the current file. Rates are net changes between observations, so same-inode truncation and regrowth may be missed.</p>
@@ -1170,8 +1189,8 @@ platform: linux/amd64</pre></div>
             </article>
             <article class="quick-check">
               <strong><code>-depth N</code></strong>
-              <code>main · light · db · docker · mac system</code>
-              <p>Set maximum directory depth. Defaults: main, database, and Docker <code>4</code>; light <code>2</code>; macOS system <code>5</code>.</p>
+              <code>main · light · db · docker · mac system · mac user</code>
+              <p>Set maximum directory depth. Defaults: main, database, and Docker <code>4</code>; light <code>2</code>; macOS system/user <code>5</code>.</p>
             </article>
             <article class="quick-check">
               <strong><code>-interval DURATION</code></strong>
@@ -1180,17 +1199,17 @@ platform: linux/amd64</pre></div>
             </article>
             <article class="quick-check">
               <strong><code>-json</code></strong>
-              <code>main · light · list · db · docker · doc · mac system</code>
+              <code>main · light · list · db · docker · doc · mac system · mac user</code>
               <p>Emit machine-readable JSON. Watch mode emits one compact JSON value per line as NDJSON.</p>
             </article>
             <article class="quick-check">
               <strong><code>-sample DURATION</code></strong>
-              <code>main · light · db · docker · mac system</code>
+              <code>main · light · db · docker · mac system · mac user</code>
               <p>Measure file and filesystem growth over the selected duration. Use <code>0</code> to disable; main defaults to <code>3s</code>.</p>
             </article>
             <article class="quick-check">
               <strong><code>-top N</code></strong>
-              <code>main · light · db · docker · mac system</code>
+              <code>main · light · db · docker · mac system · mac user</code>
               <p>Limit the largest and fastest-growing files reported. Main and focused scans default to <code>20</code>; light defaults to <code>10</code>.</p>
             </article>
             <article class="quick-check">
@@ -1218,7 +1237,7 @@ platform: linux/amd64</pre></div>
               <code>sh scripts/build-macos.sh</code>
             </div>
             <p>Run from a checkout with Go 1.22 or newer. Creates <code>diskc_macos_arm64.tar.gz</code>, <code>diskc_macos_amd64.tar.gz</code>, and <code>checksums.txt</code> in <code>dist/macos</code>. Verify with <code>shasum -a 256 -c checksums.txt</code> and extract the package matching your Mac. The destination needs no Go or root access. Existing packages are not overwritten.</p>
-            <p>In Terminal, run <code>./diskc list</code>, <code>./diskc light "$HOME"</code>, or <code>./diskc mac system --depth 2 --top 10</code>. Local packages are not Developer ID signed or notarized. Linux process attribution and deleted-open inspection are unavailable on macOS. See the <a href="https://github.com/debugc-clis/diskc#macos-executable-packages">macOS instructions</a>.</p>
+            <p>In Terminal, run <code>./diskc list</code>, <code>./diskc light "$HOME"</code>, or <code>./diskc mac user --depth 3 --top 10</code>. Local packages are not Developer ID signed or notarized. Linux process attribution and deleted-open inspection are unavailable on macOS. See the <a href="https://github.com/debugc-clis/diskc#macos-executable-packages">macOS instructions</a>.</p>
           </article>
 
           <article class="card install">
