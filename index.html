@@ -1032,6 +1032,7 @@ Filesystem: /var/lib/postgresql
             <div class="example-copy">
               <h3><code>diskc docker [flags]</code></h3>
               <p>Inspect configured and conventional rootful or rootless data roots, containerd storage, Docker logs, BuildKit cache, sockets, and runtime processes—without requiring Docker API access.</p>
+              <p>If a checked <code>daemon.json</code> cannot be read or parsed, text and top-level JSON <code>warnings</code> show its path and failure reason. Discovery continues with later configurations or conventional paths, but the daemon’s actual data root may remain undiscovered. Verify the daemon configuration and access before treating the paths as complete incident evidence. Missing optional configs are skipped quietly; the first successfully read config still ends the configuration search.</p>
               <div class="example-tags"><span>Docker</span><span>containerd</span><span>Rootless aware</span></div>
             </div>
             <div class="terminal">
