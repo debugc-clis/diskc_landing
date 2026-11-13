@@ -1206,18 +1206,19 @@ platform: linux/amd64</pre></div>
     <section id="install">
       <div class="wrap">
         <h2 class="section-title">Install <span>diskc</span></h2>
-        <p class="section-intro">diskc is in early development. Build it from source today; Homebrew distribution is planned but not yet available.</p>
+        <p class="section-intro">Build macOS executable packages for Apple Silicon and Intel from a checkout, or run directly from source. Homebrew distribution is planned but not yet available.</p>
 
         <div class="install-grid">
           <article class="card install">
             <div class="install-head">
-              <strong>Homebrew (planned)</strong>
-              <span class="pill">Work in progress</span>
+              <strong>macOS executable packages</strong>
+              <span class="pill">Apple Silicon + Intel</span>
             </div>
             <div class="copyline">
-              <code>brew install diskc</code>
+              <code>sh scripts/build-macos.sh</code>
             </div>
-            <p><strong style="color:var(--yellow)">Not available yet.</strong> This will be the intended command once a formula is published. Follow GitHub releases for availability.</p>
+            <p>Run from a checkout with Go 1.22 or newer. Creates <code>diskc_macos_arm64.tar.gz</code>, <code>diskc_macos_amd64.tar.gz</code>, and <code>checksums.txt</code> in <code>dist/macos</code>. Verify with <code>shasum -a 256 -c checksums.txt</code> and extract the package matching your Mac. The destination needs no Go or root access. Existing packages are not overwritten.</p>
+            <p>In Terminal, run <code>./diskc list</code>, <code>./diskc light "$HOME"</code>, or <code>./diskc mac system --depth 2 --top 10</code>. Local packages are not Developer ID signed or notarized. Linux process attribution and deleted-open inspection are unavailable on macOS. See the <a href="https://github.com/debugc-clis/diskc#macos-executable-packages">macOS instructions</a>.</p>
           </article>
 
           <article class="card install">
