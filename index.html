@@ -1005,6 +1005,8 @@ REMOTE    /backup  host:/backup    nfs4/remote  -         -         -          -
             <div class="example-copy">
               <h3><code>diskc db [flags]</code></h3>
               <p>Discover PostgreSQL, MySQL/MariaDB, Redis, ClickHouse, and MongoDB processes, configuration, data paths, log paths, and relevant disk settings without connecting to the database.</p>
+              <p>If a discovered configuration cannot be opened or read to completion, text and that database instance's JSON <code>warnings</code> show the configuration path and failure reason. Settings and paths read before the failure remain available, and discovery continues with other configurations. Verify configuration access as the affected service user before treating the discovered paths as complete incident evidence. JSON remains an array of database instances; these warnings are separate from filesystem scan and writer warnings.</p>
+              <p>Missing optional configurations are quiet during discovery. Parsing is best-effort: database syntax and included configuration files are not validated or expanded. Unreadable search directories and hidden processes can still limit discovery without a configuration-read warning, so no warnings or an empty result does not establish that no database is present.</p>
               <div class="example-tags"><span>Read only</span><span>No DB login</span><span>Five engines</span></div>
             </div>
             <div class="terminal">
